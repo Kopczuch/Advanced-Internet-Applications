@@ -163,7 +163,7 @@ public class MoviesController : ControllerBase
         );
     }
 
-    // Method returning genres of a movie with given id
+    // T1.1 Method returning genres of a movie with given id
     [HttpGet("GetMovieGenres/{movie_id}")]
     public IEnumerable<Genre> GetMovieGenres(int movie_id)
     {
@@ -173,7 +173,7 @@ public class MoviesController : ControllerBase
             .FirstOrDefault(e => e.MovieID == movie_id).Genres;
     }
 
-    // Method creating genre vector of a movie with given id
+    // T1.2 Method creating genre vector of a movie with given id
     [HttpGet("GetGenresVector/{movie_id}")]
     public List<int> GetGenresVector(int movie_id)
     {
@@ -200,7 +200,7 @@ public class MoviesController : ControllerBase
         return GenreVector;
     }
 
-    // Method calculating cosine similarity of two vectors
+    // T1.3 Method calculating cosine similarity of two vectors
     public static double CosineSimilarity(List<int> v1, List<int> v2)
     {
         if (v1.Count() != v2.Count())
@@ -226,7 +226,7 @@ public class MoviesController : ControllerBase
         return Math.Round(dotProduct / (mag1 * mag2), 4);
     }
 
-    // Method comparing two movies with given id using cosine similarity
+    // T1.4 Method comparing two movies with given id using cosine similarity
     [HttpGet("CompareMovies/{movie1_id, movie2_id}")]
     public double CompareMovies(int movie1_id, int movie2_id)
     {
@@ -235,7 +235,7 @@ public class MoviesController : ControllerBase
         return CosineSimilarity(v1, v2);
     }
 
-    // Method returning list of movies with at least one shared genre
+    // T1.4 Method returning list of movies with at least one shared genre
     [HttpGet("SharedGenreMovies/{movie_id}")]
     public List<Movie> SharedGenreMovies(int movie_id)
     {
@@ -252,7 +252,7 @@ public class MoviesController : ControllerBase
         return SharedGenreMovies;
     }
 
-    // Method returning list of movies with similarity over a given threshold
+    // T1.5 Method returning list of movies with similarity over a given threshold
     [HttpGet("SimilarMovies/{movie_id, threshold}")]
     public List<Movie> SimilarMovies(int movie_id, double threshold)
     {
@@ -262,10 +262,10 @@ public class MoviesController : ControllerBase
 
         foreach (var movie in AllMovies)
         {
+            if (movie_id == movie.MovieID)
+                continue;
             if (CompareMovies(movie_id, movie.MovieID) > threshold)
             {
-                if (movie_id == movie.MovieID)
-                    continue;
                 Result.Add(movie);
             }
         }
@@ -273,27 +273,70 @@ public class MoviesController : ControllerBase
         return Result;
     }
 
-    // Method returning movies rated by user with given id
+    // T1.6 Method returning movies rated by user with given id
     [HttpGet("RatedByUser/{user_id}")]
     public List<Movie> RatedByUser(int user_id)
     {
         MoviesContext dbContext = new MoviesContext();
-        List<Rating> Ratings = dbContext.Ratings
-            .Where(e => e.RatingUser.UserID == user_id)
+        List<Movie> RatedMovies = dbContext.Ratings
+            .Where(e => e.RatingUser.UserID == user_id && e.RatedMovie != null)
+            .Select(e => e.RatedMovie)
+            .Distinct()
             .ToList();
-        TODO:
-        // List<Movie> RatedMovies = dbContext.Movies
-        //     .Where(e => Ratings.Contains(e.MovieID))
-        //     .ToList();
-        return new List<Movie>();
+        return RatedMovies;
     }
 
-    // Method returning movies rated by user with given id sorted by rating
+    // T1.7 Method returning movies rated by user with given id sorted by rating
     [HttpGet("RatedByUserSorted/{user_id}")]
     public List<Movie> RatedByUserSorted(int user_id)
     {
-        
-        return new List<Movie>();
+        MoviesContext dbContext = new MoviesContext();
+        List<Movie> RatedMovies = dbContext.Ratings
+            .Where(e => e.RatingUser.UserID == user_id && e.RatedMovie != null)
+            .OrderByDescending(e => e.RatingValue)
+            .Select(e => e.RatedMovie)
+            .ToList();
+        return RatedMovies;
     }
 
+    // T1.8 Method returning a list of movies, similar to the movie highest rated by a user with a given id.
+    [HttpGet("SimToHighRated/{user_id, sim_threshold}")]
+    public List<Movie> SimToHighRated(int user_id, double sim_threshold)
+    {
+        MoviesContext dbContext = new MoviesContext();
+        Movie HighestRated = RatedByUserSorted(user_id).First();
+        List<Movie> Similar = SimilarMovies(HighestRated.MovieID, sim_threshold);
+        
+        return Similar;
+    }
+
+    // T1.9 Method returning recommendation set of given size for given user id
+    [HttpGet("RecomSet/{user_id, size, threshold}")]
+    public List<Movie> RecomSet(int user_id, int size, double threshold)
+    {
+        MoviesContext dbContext = new MoviesContext();
+        Movie HighRated = RatedByUserSorted(user_id).First();
+        List<Movie> AllMovies = dbContext.Movies.ToList();
+        List<Movie> Result = new List<Movie>();
+        List<string> RatedMoviesID = dbContext.Ratings
+            .Where(e => e.RatingUser.UserID == user_id && e.RatedMovie != null)
+            .OrderByDescending(e => e.RatingValue)
+            .Select(e => e.RatingValue)
+            .ToList();
+
+        foreach (var movie in AllMovies)
+        {
+            if (Result.Count() >= size)
+                break;
+            if (HighRated.MovieID == movie.MovieID)
+                continue;
+            if (CompareMovies(HighRated.MovieID, movie.MovieID) > threshold)
+            {
+                if (!RatedMoviesID.Contains(movie.MovieID.ToString()))
+                    Result.Add(movie);
+            }
+        }
+
+        return Result;
+    }
 }
