@@ -31,4 +31,11 @@ namespace Lab2
         public virtual Movie? RatedMovie {get; set;}
         public virtual User? RatingUser {get;set;}
     }
+
+    public class MovieScore
+    {
+        public int MovieID {get; set;}
+        public string Title {get; set;}
+        public double Score {get; set;}
+    }
 }

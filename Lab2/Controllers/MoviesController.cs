@@ -310,7 +310,7 @@ public class MoviesController : ControllerBase
         return Similar;
     }
 
-    // T1.9 Method returning recommendation set of given size for given user id using H1 method
+    // T1.9 Method returning recommendation set of given size for given user id using H1 hypothesis
     [HttpGet("RecomSetH1/{user_id, size, threshold}")]
     public List<Movie> RecomSetH1(int user_id, int size, double threshold)
     {
@@ -341,6 +341,7 @@ public class MoviesController : ControllerBase
     }
 
     //T2
+    // Method returning vector of user ratings
     [HttpGet("GetRatingsVector/{user_id}")]
     public List<double> GetRatingsVector(int user_id)
     {
@@ -363,18 +364,58 @@ public class MoviesController : ControllerBase
         return RatingsVector;
     }
 
+    // Method calculating Adjusted Cosine Similarity of two vectors
+    public static double AdjCosineSimilarity(List<double> user1, List<double> user2)
+    {
+        int n = user1.Count;
+        double sum1 = 0, sum2 = 0, sum1sq = 0, sum2sq = 0, psum = 0;
+        int n_nonzero = 0;
+
+        // Calculate the average rating for each user based on their non-zero ratings
+        double avg1 = user1.Where(r => r != 0).DefaultIfEmpty(0).Average();
+        double avg2 = user2.Where(r => r != 0).DefaultIfEmpty(0).Average();
+
+        // Calculate the centered cosine similarity
+        for (int i = 0; i < n; i++)
+        {
+            double x = user1[i] - avg1;
+            double y = user2[i] - avg2;
+            if (x != 0 && y != 0)
+            {
+                n_nonzero++;
+                sum1 += x;
+                sum2 += y;
+                sum1sq += x * x;
+                sum2sq += y * y;
+                psum += x * y;
+            }
+        }
+
+        if (n_nonzero == 0) return 0;
+
+        double num = psum - (sum1 * sum2 / n_nonzero);
+        double den = Math.Sqrt((sum1sq - (sum1 * sum1 / n_nonzero)) * (sum2sq - (sum2 * sum2 / n_nonzero)));
+
+        if (den == 0) return 0;
+
+        return num / den;
+    }
+
+    // Method comparing users of given IDs using Adjusted Cosine Similarity
     [HttpGet("CompareUsers/{user1_id, user2_id}")]
     public double CompareUsers(int user1_id, int user2_id)
     {
         List<double> v1 = GetRatingsVector(user1_id);
         List<double> v2 = GetRatingsVector(user2_id);
-        return CosineSimilarity(v1, v2);
+        //return CosineSimilarity(v1, v2);
+        return AdjCosineSimilarity(v1, v2);
     }
 
+    // Method returning recommendation set of given size for given user id using H2 hypothesis
     [HttpGet("RecomSetH2/{user_id, size}")]
     public List<Movie> RecomSetH2(int user_id, int size)
     {
-        double threshold = 0.3;
+        double threshold = 0.15;
         MoviesContext dbContext = new MoviesContext();
         List<Movie> RecomSet = new List<Movie>();
         List<User> AllUsers = dbContext.Users
@@ -385,33 +426,79 @@ public class MoviesController : ControllerBase
                         .Select(e => e.RatedMovie)
                         .Distinct()
                         .ToList();
-        // foreach (var user in AllUsers)
-        // {
-        //     if (CompareUsers(user_id, user.UserID) > threshold)
-        //     {
-        //         Console.WriteLine(user.Name);
-        //         var GoodMovies = dbContext.Ratings
-        //             .Where(e => e.RatingUser.UserID == user.UserID
-        //                     && e.RatedMovie != null
-        //                     && Convert.ToDouble(e.RatingValue) >= 4.0)
-        //             .Select(e => e.RatedMovie)
-        //             .Distinct();
+        foreach (var user in AllUsers)
+        {
+            //Console.WriteLine(CompareUsers(user_id, user.UserID));
+            if (CompareUsers(user_id, user.UserID) > threshold)
+            {
+                //Console.WriteLine(user.Name);
+                var GoodMovies = dbContext.Ratings
+                    .Where(e => e.RatingUser.UserID == user.UserID
+                            && e.RatedMovie != null
+                            && Convert.ToDouble(e.RatingValue) >= 4.0)
+                    .Select(e => e.RatedMovie)
+                    .Distinct();
                 
-        //         foreach (var movie in GoodMovies)
-        //         {
-        //             if (!MoviesRatedByUser.Contains(movie))
-        //                 RecomSet.Add(movie);
-        //             if (RecomSet.Count() == size)
-        //                 break;
-        //         }
-        //     }
-        //     if (RecomSet.Count() == size)
-        //         break;
-        // }
-        var v1 = new List<double>() {1.0, 0.0, 1.0};
-        var v2 = new List<double>() {5.0, 0.0, 5.0};
-        Console.WriteLine("CosineSimilarity:\t", CosineSimilarity(v1, v2));
-        //Console.WriteLine("AdjustSimilarity:\t", AdjustedCosineSimilarity(v1, v2));
+                foreach (var movie in GoodMovies)
+                {
+                    if (!MoviesRatedByUser.Contains(movie))
+                        RecomSet.Add(movie);
+                    if (RecomSet.Count() == size)
+                        break;
+                }
+            }
+            if (RecomSet.Count() == size)
+                break;
+        }
         return RecomSet;
+    }
+
+    // Method combining H1 & H2 hypothesis
+    [HttpGet("RecomScoreSet/{user_id, size}")]
+    public List<MovieScore> RecomScoreSet(int user_id, int size)
+    {
+        MoviesContext dbContext = new MoviesContext();
+        // List of movies with similar genres
+        List<Movie> SimMovies = RecomSetH1(user_id, 100, 0.8);
+        // Creating a list of similar users
+        double threshold = 0.15;
+        List<User> AllUsers = dbContext.Users.ToList();
+        // List<User> SimUsers = AllUsers
+        //     .Where(e => CompareUsers(e.UserID, user_id) >= threshold && e.UserID != user_id)
+        //     .ToList();
+        
+        List<User> SimUsers = new List<User>();
+        foreach (var user in AllUsers)
+        {
+            if (CompareUsers(user_id, user.UserID) >= threshold)
+                SimUsers.Add(user);
+            if (SimUsers.Count() == 10)
+                break;
+        }
+
+        // Creating score set
+        List<MovieScore> ScoreSet = new List<MovieScore>();
+        foreach (var movie in SimMovies)
+        {
+            // Create MovieScore object for every similar movie
+            MovieScore movieScore = new MovieScore();
+            movieScore.MovieID = movie.MovieID;
+            movieScore.Title = movie.Title;
+            double score = 0.0;
+
+            // Calculate recom score of movie
+            foreach (var user in SimUsers)
+            {
+                var rating = dbContext.Ratings.FirstOrDefault(e => e.RatedMovie.MovieID == movie.MovieID && e.RatingUser.UserID == user.UserID);
+                if (rating != null)
+                {
+                    score += double.Parse(rating.RatingValue);
+                }
+            }
+            movieScore.Score = Math.Round(score / SimUsers.Count(), 2);
+            ScoreSet.Add(movieScore);
+        }
+        ScoreSet = ScoreSet.OrderByDescending(e => e.Score).ToList();
+        return ScoreSet.Take(size).ToList();
     }
 }

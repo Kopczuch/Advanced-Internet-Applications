@@ -760,3 +760,6 @@ $RECYCLE.BIN/
 
 _NCrunch*
 *.csproj
+*.v2
+*.vsidx
+*.lock
