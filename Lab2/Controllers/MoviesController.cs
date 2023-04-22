@@ -175,7 +175,7 @@ public class MoviesController : ControllerBase
 
     // T1.2 Method creating genre vector of a movie with given id
     [HttpGet("GetGenresVector/{movie_id}")]
-    public List<int> GetGenresVector(int movie_id)
+    public List<double> GetGenresVector(int movie_id)
     {
         MoviesContext dbContext = new MoviesContext();
         List<Genre> AllGenres = dbContext.Genres
@@ -183,7 +183,7 @@ public class MoviesController : ControllerBase
             .OrderBy(e => e.Name)
             .ToList();
         
-        List<int> GenreVector = Enumerable.Repeat(0, AllGenres.Count()).ToList();
+        List<double> GenreVector = Enumerable.Repeat(0.0, AllGenres.Count()).ToList();
 
         List<Genre> MovieGenres = GetMovieGenres(movie_id).ToList();
         int count = 0;
@@ -192,7 +192,7 @@ public class MoviesController : ControllerBase
             bool containsGenre = MovieGenres.Any(e => e.Name == genre.Name);
             if (containsGenre)
             {
-                GenreVector[count] = 1;
+                GenreVector[count] = 1.0;
             }
             count++;
         }
@@ -201,7 +201,7 @@ public class MoviesController : ControllerBase
     }
 
     // T1.3 Method calculating cosine similarity of two vectors
-    public static double CosineSimilarity(List<int> v1, List<int> v2)
+    public static double CosineSimilarity(List<double> v1, List<double> v2)
     {
         if (v1.Count() != v2.Count())
         {
@@ -214,9 +214,9 @@ public class MoviesController : ControllerBase
 
         for (int i = 0; i < v1.Count(); i++)
         {
-            dotProduct += (double)v1[i] * (double)v2[i];
-            mag1 += Math.Pow((double)v1[i], 2);
-            mag2 += Math.Pow((double)v2[i], 2);
+            dotProduct += v1[i] * v2[i];
+            mag1 += Math.Pow(v1[i], 2);
+            mag2 += Math.Pow(v2[i], 2);
         }
 
         mag1 = Math.Sqrt(mag1);
@@ -230,8 +230,8 @@ public class MoviesController : ControllerBase
     [HttpGet("CompareMovies/{movie1_id, movie2_id}")]
     public double CompareMovies(int movie1_id, int movie2_id)
     {
-        List<int> v1 = GetGenresVector(movie1_id);
-        List<int> v2 = GetGenresVector(movie2_id);
+        List<double> v1 = GetGenresVector(movie1_id);
+        List<double> v2 = GetGenresVector(movie2_id);
         return CosineSimilarity(v1, v2);
     }
 
@@ -310,9 +310,9 @@ public class MoviesController : ControllerBase
         return Similar;
     }
 
-    // T1.9 Method returning recommendation set of given size for given user id
-    [HttpGet("RecomSet/{user_id, size, threshold}")]
-    public List<Movie> RecomSet(int user_id, int size, double threshold)
+    // T1.9 Method returning recommendation set of given size for given user id using H1 method
+    [HttpGet("RecomSetH1/{user_id, size, threshold}")]
+    public List<Movie> RecomSetH1(int user_id, int size, double threshold)
     {
         MoviesContext dbContext = new MoviesContext();
         Movie HighRated = RatedByUserSorted(user_id).First();
@@ -338,5 +338,80 @@ public class MoviesController : ControllerBase
         }
 
         return Result;
+    }
+
+    //T2
+    [HttpGet("GetRatingsVector/{user_id}")]
+    public List<double> GetRatingsVector(int user_id)
+    {
+        MoviesContext dbContext = new MoviesContext();
+        List<Movie> AllMovies = dbContext.Movies.ToList();
+        List<Rating> UserRatings = dbContext.Ratings
+            .Where(e => e.RatingUser.UserID == user_id)
+            .ToList();
+        List<double> RatingsVector = Enumerable.Repeat(0.0, AllMovies.Count()).ToList();
+        int ct = 0;
+        foreach (var movie in AllMovies)
+        {
+            var rate = UserRatings.FirstOrDefault(e => e.RatedMovie.MovieID == movie.MovieID);
+            if (rate != null)
+            {
+                RatingsVector[ct] = double.Parse(rate.RatingValue);
+            }
+            ct++;
+        }
+        return RatingsVector;
+    }
+
+    [HttpGet("CompareUsers/{user1_id, user2_id}")]
+    public double CompareUsers(int user1_id, int user2_id)
+    {
+        List<double> v1 = GetRatingsVector(user1_id);
+        List<double> v2 = GetRatingsVector(user2_id);
+        return CosineSimilarity(v1, v2);
+    }
+
+    [HttpGet("RecomSetH2/{user_id, size}")]
+    public List<Movie> RecomSetH2(int user_id, int size)
+    {
+        double threshold = 0.3;
+        MoviesContext dbContext = new MoviesContext();
+        List<Movie> RecomSet = new List<Movie>();
+        List<User> AllUsers = dbContext.Users
+            .Where(e => e.UserID != user_id)
+            .ToList();
+        List<Movie> MoviesRatedByUser = dbContext.Ratings
+            .Where(e => e.RatingUser.UserID == user_id && e.RatedMovie != null)
+                        .Select(e => e.RatedMovie)
+                        .Distinct()
+                        .ToList();
+        // foreach (var user in AllUsers)
+        // {
+        //     if (CompareUsers(user_id, user.UserID) > threshold)
+        //     {
+        //         Console.WriteLine(user.Name);
+        //         var GoodMovies = dbContext.Ratings
+        //             .Where(e => e.RatingUser.UserID == user.UserID
+        //                     && e.RatedMovie != null
+        //                     && Convert.ToDouble(e.RatingValue) >= 4.0)
+        //             .Select(e => e.RatedMovie)
+        //             .Distinct();
+                
+        //         foreach (var movie in GoodMovies)
+        //         {
+        //             if (!MoviesRatedByUser.Contains(movie))
+        //                 RecomSet.Add(movie);
+        //             if (RecomSet.Count() == size)
+        //                 break;
+        //         }
+        //     }
+        //     if (RecomSet.Count() == size)
+        //         break;
+        // }
+        var v1 = new List<double>() {1.0, 0.0, 1.0};
+        var v2 = new List<double>() {5.0, 0.0, 5.0};
+        Console.WriteLine("CosineSimilarity:\t", CosineSimilarity(v1, v2));
+        //Console.WriteLine("AdjustSimilarity:\t", AdjustedCosineSimilarity(v1, v2));
+        return RecomSet;
     }
 }
