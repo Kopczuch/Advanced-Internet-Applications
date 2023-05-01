@@ -461,25 +461,25 @@ public class MoviesController : ControllerBase
         // List of movies with similar genres
         List<Movie> SimMovies = RecomSetH1(user_id, 100, 0.8);
         // User similarity threshold
-        double threshold = 0.15;
+        double threshold = 0.2;
         List<User> AllUsers = dbContext.Users.ToList();
 
         // Creating a list of similar users
 
         // Long version
-        // List<User> SimUsers = AllUsers
-        //     .Where(e => CompareUsers(e.UserID, user_id) >= threshold && e.UserID != user_id)
-        //     .ToList();
+        List<User> SimUsers = AllUsers
+            .Where(e => CompareUsers(e.UserID, user_id) >= threshold && e.UserID != user_id)
+            .ToList();
         
         // Shorter version
-        List<User> SimUsers = new List<User>();
-        foreach (var user in AllUsers)
-        {
-            if (CompareUsers(user_id, user.UserID) >= threshold)
-                SimUsers.Add(user);
-            if (SimUsers.Count() == 10)
-                break;
-        }
+        // List<User> SimUsers = new List<User>();
+        // foreach (var user in AllUsers)
+        // {
+        //     if (CompareUsers(user_id, user.UserID) >= threshold)
+        //         SimUsers.Add(user);
+        //     if (SimUsers.Count() == 10)
+        //         break;
+        // }
 
         // Creating score set
         List<MovieScore> ScoreSet = new List<MovieScore>();
