@@ -1,0 +1,13 @@
+{% block content %}
+<div class="container mt-5">
+    <h1>{{ movie.title }}</h1>
+    <p class="mb-5"><strong>Genres:</strong>
+    {% for genre in movie.genres.all %}
+        <a href="/genre/{{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}
+    {% empty %}
+        No genres found.
+    {% endfor %}
+    </p>
+    <a class="btn btn-primary" href="/">Movies List</a>
+</div>
+{% endblock %}
