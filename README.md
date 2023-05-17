@@ -6,6 +6,7 @@
 - Web Services and REST APIs
   - Assignment: C#/MySQL APIs assignment - simple, web api based, recommender system for Moive LensFile
 - MVC in Web Frameworks
+  - Assignment: Movie platform in Django
 
 ## Project
 - TBD
