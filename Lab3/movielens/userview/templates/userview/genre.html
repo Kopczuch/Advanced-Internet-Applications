@@ -1,13 +1,25 @@
+{% extends 'userview/header.html' %}
 {% block content %}
 <div class="container mt-5">
     <h1>{{ genre.name }}</h1>
-    {% comment %} <ul class="list-group">
-    {% for movie in movies %}
-        <li class="list-group-item"><a href="/movie/{{ movie.id }}">{{ movie.title }}</a></li>
-    {% empty %}
-        <li class="list-group-item">No movies in this genre.</li>
-    {% endfor %}
-    </ul> {% endcomment %}
+    <div class="table-responsive">
+        <table class="table table-primary">
+            <thead>
+                <tr>
+                    <th scope="col">Movie</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for movie in genre.movie_set.all%}
+                <tr class="">
+                    <td scope="row">{{movie.title}}</td>
+                    
+                </tr>
+                {%endfor%}
+            </tbody>
+        </table>
+    </div>
+    
     <a class="btn btn-primary" href="/">Movies List</a>
 </div>
 {% endblock %}

@@ -1,0 +1,20 @@
+{%extends 'userview/header.html'%}
+{% block content %}
+<div class="container mt-5">
+    <h1>My Ratings</h1>
+    <div class="table-responsive">
+        <table class="table table-primary">
+            <tbody>
+                {%for rating in user_ratings%}
+                <tr class="">
+                    <td scope="row">{{rating.movie}}</td>
+                    <td scope="row">{{rating.value}}</td>
+                </tr>
+                {%endfor%}
+            </tbody>
+        </table>
+    </div>
+    <a class="btn btn-primary" href="/">Movies List</a>
+    <a class="btn btn-success" href="/new_rating">Add Rating</a>
+</div>
+{% endblock %}
