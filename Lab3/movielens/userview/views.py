@@ -35,6 +35,13 @@ class IndexView(generic.ListView):
 class MovieView(generic.DetailView):
     model = Movie
     template_name = 'userview/movie.html'
+    def get_comments(self):
+        context = super().get_context_data()
+        movie = self.get_object()
+        comments = Comment.objects.filter(movie=movie)
+        context["comments"] = comments 
+        return context
+        
 class GenreView(generic.DetailView):
     model = Genre
     template_name = 'userview/genre.html'

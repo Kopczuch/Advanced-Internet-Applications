@@ -9,6 +9,16 @@
         No genres found.
     {% endfor %}
     </p>
+    {% for comment in comments %}
+        <div class="card">
+            <img src="image.jpg" class="card-img-top" alt="Image">
+            <div class="card-body">
+                <h5 class="card-title">{{ comment.user }}</h5>
+                <p class="card-text">{{ comment.content }}</p>
+                <a href="#" class="btn btn-primary">Read More</a>
+            </div>
+        </div>
+    {% endfor %}
     <a class="btn btn-primary" href="/">Movies List</a>
 </div>
 {% endblock %}

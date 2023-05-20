@@ -8,12 +8,17 @@ class Genre(models.Model):
 class Movie(models.Model):
     title = models.CharField(max_length=1000)
     genres = models.ManyToManyField(Genre)
+    imdblink = models.URLField(max_length=500)
     def __str__(self):
         return self.title
 class Rating(models.Model):
     value = models.IntegerField()
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     def __str__(self):
         return self.movie.title
+class Comment(models.Model):
+    content = models.TextField()
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
