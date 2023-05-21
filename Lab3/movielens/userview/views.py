@@ -23,10 +23,12 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views import generic
 from django.contrib.auth import login, logout, authenticate
-from django.db.models import Avg, IntegerField
+from django.db.models import Avg, IntegerField, Q
 from django.db.models.functions import Coalesce
 from userview.forms import NewUserForm
 from .models import Movie, Genre, Rating, Comment, Image
+from django.shortcuts import get_object_or_404
+
 class IndexView(generic.ListView):
     template_name = 'userview/index.html'
     context_object_name = 'movies'
@@ -34,6 +36,7 @@ class IndexView(generic.ListView):
     model = Movie
     def get_queryset(self):
         return Movie.objects.order_by('-title')
+    
 class MovieView(generic.DetailView):
     model = Movie
     template_name = 'userview/movie.html'
@@ -55,23 +58,68 @@ class MovieView(generic.DetailView):
             user_rating = 0
         context['user_rating'] = user_rating
         return context
+    
 class GenreView(generic.DetailView):
     model = Genre
     template_name = 'userview/genre.html'
+    
 class RatingView(generic.DeleteView):
     model = Rating
     template_name = 'userview/rating.html'
+    
 class RatingForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        disable_movie = kwargs.pop('disable_movie', False)
+        super(RatingForm, self).__init__(*args, **kwargs)
+        if disable_movie:
+            self.fields['movie'].disabled = True
     class Meta:
         model = Rating
         fields = ['movie', 'value']
+        
 class CommentView(generic.DetailView):
     model = Comment
     template_name = 'userview/comment.html'
-class ComentForm(forms.ModelForm):
+    
+class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['content']
+        
+class SearchForm(forms.Form):
+    genres = forms.CharField(required=False)
+    title = forms.CharField(required=False)
+    min_rating = forms.IntegerField(required=False)
+
+
+from django.db.models import Avg
+
+def search(request):
+    search_results = None
+
+    if request.method == 'POST':
+        search_form = SearchForm(request.POST)
+        if search_form.is_valid():
+            genres = search_form.cleaned_data['genres'].split(' ')
+            title = search_form.cleaned_data['title']
+            min_rating = search_form.cleaned_data['min_rating']
+            query = Q()
+            if genres:
+                for genre in genres:
+                    query |= Q(genres__name__icontains=genre.strip().lower())
+            if title:
+                query &= Q(title=title)
+            if min_rating:
+                query &= Q(rating__gte=min_rating)
+            search_results = Movie.objects.filter(query).annotate(avg_rating=Avg('rating__value')).order_by('title')
+        else:
+            search_form = SearchForm()
+    else:
+        search_form = SearchForm()
+
+    context = {'search_form': search_form, 'search_results': search_results}
+    return render(request, 'userview/search.html', context)
+
 
 
 def register_request(request):
@@ -116,18 +164,27 @@ def my_ratings(request):
     return redirect("/my_ratings")
 
 
-def new_rating(request):
+def new_rating(request, movie_id=None):
     if request.method == 'POST':
-        form = RatingForm(request.POST)
-        if form.is_valid():
-            rating = form.save(commit=False)
+        add_form = RatingForm(request.POST)
+        if add_form.is_valid():
+            rating = add_form.save(commit=False)
             rating.user = request.user
+            if movie_id:
+                movie = get_object_or_404(Movie, id=movie_id)
+                rating.movie = movie
             rating.save()
             return redirect('my_ratings')
     else:
-        form = RatingForm()
-    
-    return render(request, 'userview/new_rating.html', {'add_form': form})
+        initial = {}
+        if movie_id:
+            initial['movie'] = movie_id
+            add_form = RatingForm(initial=initial, disable_movie=True)
+        else:
+            add_form = RatingForm(initial=initial)
+
+    context = {'add_form': add_form}
+    return render(request, 'userview/new_rating.html', context)
 
 
 def movie_gallery(request, movie_id):
@@ -138,3 +195,22 @@ def movie_gallery(request, movie_id):
         'gallery': gallery,
     }
     return render(request, template_name='userview/gallery.html', context=context)
+
+
+def add_comment(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+    if request.method == 'POST':
+        comment_form = CommentForm(request.POST)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.user = request.user
+            comment.movie = movie
+            comment.save()
+            return redirect('/movie/' + str(movie.id))
+    else:
+        comment_form = CommentForm()
+    context = {'comment_form': comment_form, 'movie': movie}
+    return render(request, 'userview/add_comment.html', context)
+
+
+    
