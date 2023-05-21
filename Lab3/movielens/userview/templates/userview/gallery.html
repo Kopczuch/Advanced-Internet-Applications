@@ -1,0 +1,17 @@
+{%extends 'userview/header.html'%}
+{% block content %}
+
+<div class="container mt-5">
+    <h1>{{ movie.title }}: Gallery<h1>
+    <div class="row justify-content-center">
+        {% for image in gallery %}
+            <div class="col-md-4 mb-3">
+                <img src="{{ image.img.url }}" alt="{{ image.title }}"
+                style="width: 300px; height: 180px;">
+            </div>
+        {% endfor %}
+    </div>
+    <a class="btn btn-primary" href="/movie/{{ movie.id }}">Return to movie</a>
+</div>
+
+{% endblock %}

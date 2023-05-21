@@ -23,8 +23,10 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views import generic
 from django.contrib.auth import login, logout, authenticate
+from django.db.models import Avg, IntegerField
+from django.db.models.functions import Coalesce
 from userview.forms import NewUserForm
-from .models import Movie, Genre, Rating
+from .models import Movie, Genre, Rating, Comment, Image
 class IndexView(generic.ListView):
     template_name = 'userview/index.html'
     context_object_name = 'movies'
@@ -35,13 +37,24 @@ class IndexView(generic.ListView):
 class MovieView(generic.DetailView):
     model = Movie
     template_name = 'userview/movie.html'
-    def get_comments(self):
-        context = super().get_context_data()
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         movie = self.get_object()
         comments = Comment.objects.filter(movie=movie)
-        context["comments"] = comments 
+        context['comments'] = comments
+        avg_rating = Rating.objects.filter(movie=movie).aggregate(
+            average_rating=Coalesce(Avg('value', output_field=IntegerField()), 0)
+        )['average_rating']
+        context['avg_rating'] = avg_rating
+        front_image = Image.objects.filter(movie=movie, front_image=True).first()
+        context['front_image'] = front_image
+        # wypierdala errora jak nie ma ratingu od zalogowanego usera
+        # if self.request.user.is_authenticated:
+        #     user_rating = Rating.objects.filter(movie=movie, user=self.request.user).first().value
+        # else:
+        #     user_rating = 0
+        # context['user_rating'] = user_rating
         return context
-        
 class GenreView(generic.DetailView):
     model = Genre
     template_name = 'userview/genre.html'
@@ -52,6 +65,9 @@ class RatingForm(forms.ModelForm):
     class Meta:
         model = Rating
         fields = ['movie', 'value']
+class CommentView(generic.DetailView):
+    model = Comment
+    template_name = 'userview/comment.html'
 
 
 def register_request(request):
@@ -108,3 +124,13 @@ def new_rating(request):
         form = RatingForm()
     
     return render(request, 'userview/new_rating.html', {'add_form': form})
+
+
+def movie_gallery(request, movie_id):
+    movie = Movie.objects.get(pk=movie_id)
+    gallery = Image.objects.filter(movie=movie)
+    context = {
+        'movie': movie,
+        'gallery': gallery,
+    }
+    return render(request, template_name='userview/gallery.html', context=context)

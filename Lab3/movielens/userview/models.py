@@ -21,4 +21,12 @@ class Comment(models.Model):
     content = models.TextField()
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    
+    def __str__(self):
+        return self.user.username
+class Image(models.Model):
+    title = models.CharField(max_length = 100)
+    img = models.ImageField(upload_to='images/')
+    front_image = models.BooleanField()
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    def __str__(self):
+        return self.title

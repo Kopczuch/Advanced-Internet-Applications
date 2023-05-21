@@ -10,5 +10,7 @@ urlpatterns = [
     path("logout", views.logout_request, name="logout"),
     path("my_ratings", views.my_ratings, name="my_ratings"),
     path("new_rating", views.new_rating, name="new_rating"),
-    # path("rating", views.RatingView.as_view(), name="rating")
+    # path("rating", views.RatingView.as_view(), name="rating"),
+    path("comment/<int:pk>", views.CommentView.as_view(), name="comment"),
+    path("movie/<int:movie_id>/gallery", views.movie_gallery, name="movie_gallery")
 ]

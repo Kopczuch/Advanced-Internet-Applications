@@ -1,24 +1,74 @@
 {%extends 'userview/header.html'%}
 {% block content %}
+<link href="https://fonts.cdnfonts.com/css/kenyan-coffee-2" rel="stylesheet">
+
 <div class="container mt-5">
-    <h1>{{ movie.title }}</h1>
-    <p class="mb-5"><strong>Genres:</strong>
-    {% for genre in movie.genres.all %}
-        <a href="/genre/{{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}
-    {% empty %}
-        No genres found.
-    {% endfor %}
+    <h1>
+        {{ movie.title }}
+        <a class="btn btn-warning" href="{{movie.imdblink}}" target="_blank"
+        style="font-family: 'Kenyan Coffee', sans-serif; font-size: 25px; width: fit-content; padding: 0px 10px;">IMDb</a>
+    </h1>
+    {% comment %} nie działa {% endcomment %}
+    {% comment %} {% if user_rating != 0 %}
+        <p class="mb-3">
+            <strong>Your Rating:</strong> {{ avg_rating }}
+        </p>
+    {% endif %} {% endcomment %}
+    <p class="mb-3">
+        <strong>Average Rating:</strong> {{ avg_rating }}
     </p>
-    {% for comment in comments %}
-        <div class="card">
-            <img src="image.jpg" class="card-img-top" alt="Image">
-            <div class="card-body">
-                <h5 class="card-title">{{ comment.user }}</h5>
-                <p class="card-text">{{ comment.content }}</p>
-                <a href="#" class="btn btn-primary">Read More</a>
-            </div>
-        </div>
-    {% endfor %}
-    <a class="btn btn-primary" href="/">Movies List</a>
+    <p class="mb-5">
+        <strong>Genres:</strong>
+        {% for genre in movie.genres.all %}
+            <a href="/genre/{{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            No genres found.
+        {% endfor %}
+    </p>
 </div>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <a href="/movie/{{ movie.id }}/gallery" style="max-width: 600px; margin: 0 auto;">
+            <div class="text-center">
+                <img src="{{ front_image.img.url }}" alt="{{ image.title }}" class="img-fluid">
+            </div>
+        </a>
+    </div>
+</div>
+
+{% comment %} <div class="image-container">
+    <img src="{{ image.img.url }}" alt="{{ image.title }}">
+    <div class="image-overlay">
+        <p class="overlay-text">Hover Text</p>
+    </div>
+    </div> {% endcomment %}
+
+<div class="container mt-5">
+    <h2>Comments</h2>
+    <div class = "row">
+        {% for comment in comments %}
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ comment.user }}</h5>
+                        <p class="card-text">
+                            {{ comment.content|truncatechars:38 }}
+                            {% comment %} {% if comment.content|length > 100 %}
+                                <a href="#" class="btn btn-primary read-more">Read More</a>
+                            {% endif %} {% endcomment %}
+                        </p>
+                        <a href="/comment/{{comment.id}}" class="btn btn-primary">See full comment</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+</div>
+
+</br>
+</br>
+</br>
+</br>
+
 {% endblock %}

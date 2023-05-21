@@ -1,0 +1,9 @@
+{% extends 'userview/header.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h1>{{ comment.user }}</h1>
+    <p> {{ comment.content }} </p>
+    
+    <a class="btn btn-secondary" href="/movie/{{comment.movie.id}}">Go Back</a>
+</div>
+{% endblock %}
