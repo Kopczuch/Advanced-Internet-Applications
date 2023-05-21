@@ -2,10 +2,10 @@
 {% block content %}
 {% load crispy_forms_tags %}
     <div class="container py-5">
-        <h1>Add Rating</h1>
-            <form method="POST" action="{% url 'new_rating' %}">
+        <h3>Comment {{ movie.title }}</h3>
+            <form method="POST">
                 {% csrf_token %}
-                {{ add_form|crispy }}
+                {{ comment_form|crispy }}
                 <button class="btn btn-primary" type="submit">Submit</button>
             </form>
     </div>

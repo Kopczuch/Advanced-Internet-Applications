@@ -12,5 +12,8 @@ urlpatterns = [
     path("new_rating", views.new_rating, name="new_rating"),
     # path("rating", views.RatingView.as_view(), name="rating"),
     path("comment/<int:pk>", views.CommentView.as_view(), name="comment"),
-    path("movie/<int:movie_id>/gallery", views.movie_gallery, name="movie_gallery")
+    path("movie/<int:movie_id>/gallery", views.movie_gallery, name="movie_gallery"),
+    path("movie/<movie_id>/rate", views.new_rating, name="rate_movie"),
+    path("movie/<movie_id>/add_comment", views.add_comment, name="add_comment"),
+    path("search", views.search, name="search")
 ]
