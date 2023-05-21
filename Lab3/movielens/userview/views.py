@@ -49,11 +49,11 @@ class MovieView(generic.DetailView):
         front_image = Image.objects.filter(movie=movie, front_image=True).first()
         context['front_image'] = front_image
         # wypierdala errora jak nie ma ratingu od zalogowanego usera
-        # if self.request.user.is_authenticated:
-        #     user_rating = Rating.objects.filter(movie=movie, user=self.request.user).first().value
-        # else:
-        #     user_rating = 0
-        # context['user_rating'] = user_rating
+        if self.request.user.is_authenticated and Rating.objects.filter(movie=movie, user=self.request.user).first() != None:
+            user_rating = Rating.objects.filter(movie=movie, user=self.request.user).first().value
+        else:
+            user_rating = 0
+        context['user_rating'] = user_rating
         return context
 class GenreView(generic.DetailView):
     model = Genre
@@ -68,6 +68,10 @@ class RatingForm(forms.ModelForm):
 class CommentView(generic.DetailView):
     model = Comment
     template_name = 'userview/comment.html'
+class ComentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
 
 
 def register_request(request):
