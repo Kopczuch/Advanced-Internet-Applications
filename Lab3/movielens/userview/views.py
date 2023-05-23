@@ -25,7 +25,7 @@ from django.views import generic
 from django.contrib.auth import login, logout, authenticate
 from django.db.models import Avg, IntegerField, Q
 from django.db.models.functions import Coalesce
-from userview.forms import NewUserForm
+from userview.forms import *
 from .models import Movie, Genre, Rating, Comment, Image
 from django.shortcuts import get_object_or_404
 
@@ -49,14 +49,14 @@ class MovieView(generic.DetailView):
             average_rating=Coalesce(Avg('value', output_field=IntegerField()), 0)
         )['average_rating']
         context['avg_rating'] = avg_rating
-        front_image = Image.objects.filter(movie=movie, front_image=True).first()
-        context['front_image'] = front_image
-        # wypierdala errora jak nie ma ratingu od zalogowanego usera
+        gallery = Image.objects.filter(movie=movie)
+        context['gallery'] = gallery.order_by('-front_image')
         if self.request.user.is_authenticated and Rating.objects.filter(movie=movie, user=self.request.user).first() != None:
             user_rating = Rating.objects.filter(movie=movie, user=self.request.user).first().value
         else:
             user_rating = 0
         context['user_rating'] = user_rating
+        context['comment_form'] = CommentForm()
         return context
     
 class GenreView(generic.DetailView):
@@ -66,31 +66,10 @@ class GenreView(generic.DetailView):
 class RatingView(generic.DeleteView):
     model = Rating
     template_name = 'userview/rating.html'
-    
-class RatingForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        disable_movie = kwargs.pop('disable_movie', False)
-        super(RatingForm, self).__init__(*args, **kwargs)
-        if disable_movie:
-            self.fields['movie'].disabled = True
-    class Meta:
-        model = Rating
-        fields = ['movie', 'value']
         
 class CommentView(generic.DetailView):
     model = Comment
     template_name = 'userview/comment.html'
-    
-class CommentForm(forms.ModelForm):
-    class Meta:
-        model = Comment
-        fields = ['content']
-        
-class SearchForm(forms.Form):
-    genres = forms.CharField(required=False)
-    title = forms.CharField(required=False)
-    min_rating = forms.IntegerField(required=False)
-
 
 from django.db.models import Avg
 
@@ -119,7 +98,6 @@ def search(request):
 
     context = {'search_form': search_form, 'search_results': search_results}
     return render(request, 'userview/search.html', context)
-
 
 
 def register_request(request):
