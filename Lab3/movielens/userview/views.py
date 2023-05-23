@@ -146,20 +146,34 @@ def new_rating(request, movie_id=None):
     if request.method == 'POST':
         add_form = RatingForm(request.POST)
         if add_form.is_valid():
-            rating = add_form.save(commit=False)
-            rating.user = request.user
-            if movie_id:
-                movie = get_object_or_404(Movie, id=movie_id)
-                rating.movie = movie
-            rating.save()
+            user = request.user
+            movie = add_form.cleaned_data['movie']
+            value = add_form.cleaned_data['value']
+            # Check if a rating already exists for the movie and user
+            existing_rating = Rating.objects.filter(user=user, movie=movie).first()
+            if existing_rating:
+                # Update the existing rating
+                existing_rating.value = value
+                existing_rating.save()
+            else:
+                # Create a new rating
+                rating = add_form.save(commit=False)
+                rating.user = user
+                rating.value = value
+                rating.save()
             return redirect('my_ratings')
     else:
         initial = {}
         if movie_id:
             initial['movie'] = movie_id
-            add_form = RatingForm(initial=initial, disable_movie=True)
+            add_form = RatingForm(initial=initial)
+            add_form.fields['movie'].initial = movie_id
         else:
             add_form = RatingForm(initial=initial)
+
+    context = {'add_form': add_form}
+    return render(request, 'userview/new_rating.html', context)
+
 
     context = {'add_form': add_form}
     return render(request, 'userview/new_rating.html', context)
@@ -190,5 +204,17 @@ def add_comment(request, movie_id):
     context = {'comment_form': comment_form, 'movie': movie}
     return render(request, 'userview/add_comment.html', context)
 
+
+def new_movie(request):
+    if request.method == 'POST':
+        movie_form = MovieForm(request.POST)
+        if movie_form.is_valid():
+            movie = movie_form.save()
+            return redirect('movie', movie_id=movie.pk)
+    else:
+        movie_form = MovieForm()
+
+    context = {'movie_form': movie_form}
+    return render(request, 'userview/new_movie.html', context)
 
     

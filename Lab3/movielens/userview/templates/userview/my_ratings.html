@@ -7,7 +7,7 @@
             <tbody>
                 {%for rating in user_ratings%}
                 <tr class="">
-                    <td scope="row">{{rating.movie}}</td>
+                    <td scope="row"><a href="movie/{{ rating.movie.id }}">{{rating.movie}}</a></td>
                     <td scope="row">{{rating.value}}</td>
                 </tr>
                 {%endfor%}

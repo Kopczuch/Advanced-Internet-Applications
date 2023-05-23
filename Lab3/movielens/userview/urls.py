@@ -4,7 +4,7 @@ from . import views
 urlpatterns = [
     path("", views.IndexView.as_view(), name="index"),
     path("genre/<int:pk>", views.GenreView.as_view(), name="index"),
-    path("movie/<int:pk>", views.MovieView.as_view(), name="index"),
+    path("movie/<int:pk>", views.MovieView.as_view(), name="movie"),
     path("register", views.register_request, name="register"),
     path("log_in", views.login_request, name="login"),
     path("logout", views.logout_request, name="logout"),
@@ -15,5 +15,6 @@ urlpatterns = [
     path("movie/<int:movie_id>/gallery", views.movie_gallery, name="movie_gallery"),
     path("movie/<movie_id>/rate", views.new_rating, name="rate_movie"),
     path("movie/<movie_id>/add_comment", views.add_comment, name="add_comment"),
-    path("search", views.search, name="search")
+    path("search", views.search, name="search"),
+    path("new_movie", views.new_movie, name="new_movie"),
 ]
