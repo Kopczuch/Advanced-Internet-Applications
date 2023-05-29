@@ -1,0 +1,85 @@
+{% extends 'userview/header.html' %}
+
+{% block content %}
+{% load crispy_forms_tags %}
+    <style>
+        .movie-image {
+            width: 200px;
+            min-height: 157px;
+            max-height: 157px;
+        }
+
+        .image-card-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .image-card {
+            width: 300px;
+            border-radius: 10px;
+            background-color: #444654;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .image-container {
+            margin-bottom: 20px;
+        }
+        
+        .movie-image {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        
+        .image-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+    </style>
+
+    <div class="container py-5">
+        <h1>Edit Movie</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ movie_form|crispy }}
+            <button class="btn btn-success" type="submit">Save</button>
+            <button class="btn btn-danger" type="submit" name="delete_movie">Delete Movie</button>
+        </form>
+        </br>
+        <h2>Gallery</h2>
+        
+        <div class="image-card-container">
+            {% for image in gallery.all %}
+            <div class="image-card">
+                <div class="image-container">
+                    <img src="{{ image.img.url }}" alt="Movie Image" class="movie-image">
+                </div>
+                <div class="image-buttons">
+                    {% if not image.front_image %}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="set_front_image" value="{{ image.id }}">
+                            <button class="btn btn-success" type="submit">Set Front Image</button>
+                        </form>
+                    {% endif %}
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="delete_image" value="{{ image.id }}">
+                        <button class="btn btn-danger" type="submit">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</br>
+</br>
+</br>
+
+{% endblock %}

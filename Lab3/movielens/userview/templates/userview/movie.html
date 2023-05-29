@@ -2,44 +2,60 @@
 {% block content %}
 {% load crispy_forms_tags %}
 <div class="container mt-5" style="margin-left: 75px;">
-    <div class="row">
-        <div class="col-md-6">
-            <h1>
-                {{ movie.title }}
-                <a class="btn btn-warning" href="{{ movie.imdblink }}" target="_blank"
-                    style="font-family: 'Kenyan Coffee', sans-serif; font-size: 25px; width: fit-content; padding: 0px 10px;">IMDb</a>
-            </h1>
-            <p class="mb-5">
-                <strong>Genres:</strong>
-                {% for genre in movie.genres.all %}
-                <a href="/genre/{{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}
-                {% empty %}
-                No genres found.
-                {% endfor %}
-            </p>
-        </div>
-        <div class="col-md-6 d-flex justify-content-end ms-md-6">
-            <div class="d-flex flex-column">
-                {% if avg_rating != 0 %}
-                <div class="mb-3">
-                    <strong>Average Rating:</strong> {{ avg_rating }} <i class="fas fa-star" style="color:gold;"></i>
-                </div>
-                {% else %}
-                <div class="mb-3">
-                    <strong>This movie has no ratings yet</strong>
-                </div>
-                {% endif %}
-                {% if user_rating != 0 %}
-                <div class="mb-3">
-                  <a href="/movie/{{ movie.id }}/rate"><i class="fas fa-pen" style="color:#198754;"></i></a> <strong>Your Rating:</strong> {{ user_rating }} <i class="fas fa-star" style="color:gold;"></i>
-                </div>
-                {% elif user.is_authenticated %}
-                    <a href="/movie/{{ movie.id }}/rate" class="btn btn-success mb-3">Rate this movie</a>
-                {% endif %}
-            </div>
-        </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h1>
+        {{ movie.title }}
+        <a class="btn btn-warning" href="{{ movie.imdblink }}" target="_blank"
+        style="font-family: 'Kenyan Coffee', sans-serif; font-size: 25px; width: fit-content; padding: 0px 10px;">IMDb</a>
+      </h1>
+      <p class="mb-2">
+        <strong>Genres:</strong>
+        {% for genre in movie.genres.all %}
+          <a href="/genre/{{ genre.id }}">{{ genre.name }}</a>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+          No genres found.
+        {% endfor %}
+      </p>
+      {% if user.is_superuser %}
+        <a href="/movie/{{ movie.id }}/add_image" class="btn btn-success" id="add-images-btn">Add Image</a>
+        <a href="/movie/{{ movie.id }}/edit_movie" class="btn btn-success">Edit Movie</a>
+      {% endif %}
     </div>
+    <div class="col-md-6 d-flex justify-content-end ms-md-6">
+      <div class="d-flex flex-column">
+        {% if avg_rating != 0 %}
+          <div class="mb-3">
+            <strong>Average Rating:</strong> {{ avg_rating }} <i class="fas fa-star" style="color:gold;"></i>
+          </div>
+        {% else %}
+          <div class="mb-3">
+            <strong>This movie has no ratings yet</strong>
+          </div>
+        {% endif %}
+        {% if user_rating != 0 %}
+        <div class="mb-3">
+          <a href="/movie/{{ movie.id }}/rate"><i class="fas fa-pen" style="color:#198754;"></i></a> <strong>Your Rating:</strong> {{ user_rating }} <i class="fas fa-star" style="color:gold;"></i>
+        </div>
+        {% elif user.is_authenticated %}
+          <a href="/movie/{{ movie.id }}/rate" class="btn btn-success mb-3">Rate this movie</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% comment %} <div class="row" id="image-form-row" style="display: none;">
+    <div class="col-md-6">
+      <form action="/movie/{{ movie.id }}/add_image" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ image_form|crispy }}
+        <button class="btn btn-success" type="submit">Add</button>
+      </form>
+    </div>
+  </div> {% endcomment %}
+</br>
+
 </div>
+
 
 <div id="myCarousel" class="carousel slide" data-bs-ride="carousel">
     <!-- Indicators -->
@@ -72,17 +88,20 @@
   <!-- Bootstrap JS (ensure you have it included) -->
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0/js/bootstrap.bundle.min.js"></script>
 
-
 <div class="container mt-5">
     <h2 style="display: flex; align-items: center;">
         Comments
     </h2>
 
-    <form action="/movie/{{ movie.id }}/add_comment" method="POST">
-        {% csrf_token %}
-        {{ comment_form|crispy }}  <!-- Display the comment form -->
-        <button class="btn btn-success" type="submit">Comment</button>
-    </form>
+    {% if user.is_authenticated %}
+      <form action="/movie/{{ movie.id }}/add_comment" method="POST">
+          {% csrf_token %}
+          {{ comment_form|crispy }}  <!-- Display the comment form -->
+          <button class="btn btn-success" type="submit">Comment</button>
+      </form>
+    {% else %}
+      <p>Only logged in users can post comments</p>
+    {% endif %}
     </br>
 
     <div class="row">
@@ -112,9 +131,21 @@
         </div>
         {% endfor %}
       </div>
-      
-
+    
 </div>
+
+{% comment %} <script>
+  const addImagesBtn = document.getElementById("add-images-btn");
+  const imageFormRow = document.getElementById("image-form-row");
+
+  addImagesBtn.addEventListener("click", () => {
+    if (imageFormRow.style.display === "none") {
+      imageFormRow.style.display = "block";
+    } else {
+      imageFormRow.style.display = "none";
+    }
+  });
+</script> {% endcomment %}
 
 </br>
 </br>

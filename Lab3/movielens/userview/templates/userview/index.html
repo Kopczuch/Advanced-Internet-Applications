@@ -1,79 +1,49 @@
 {%extends 'userview/header.html'%}
 {%block content%}
-    {% comment %} <div class="container">
-        <div class="row">
-            <h1 class="text-center mt-5 mb-4">Movies List</h1>
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    {% if movies %}
-                        <ul class="list-group .bg-success">
-                            {% for movie in movies %}
-                                <li class="list-group-item"><a href="/movie/{{movie.id}}">{{ movie.title }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="text-center">No movies are available.</p>
-                    {% endif %}
-                </div>
+
+<div class="row">
+    <h1 class="text-center mt-5 mb-4">Welcome!</h1>
+</div>
+<div class="row justify-content-center">
+    <div class="col-sm-3">
+        <div class="card">
+            <div class="card-body" style="min-height:600px;">
+                <h5 class="card-title">Popular Lately:</h5>
+                <ul>
+                    <li>Cocaine Bear</li>
+                    <li>John Wick 4</li>
+                    <li>Guardians of the Galaxy vol. 3</li>
+                    <li>The Super Mario Bros. Movie</li>
+                    <li>Fast X</li>
+                    <li>Sisu</li>
+                    <li>Dungeons & Dragons: Honor Among Thieves</li>
+                    <li>Air</li>
+                </ul>
             </div>
-        </div>
-        <div class="row">
-            <div class="pagination justify-content-center">
-                <span class="step-links">
-                    {% if page_obj.has_previous %}
-                        <a href="?page=1">&laquo; first</a>
-                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-                    {% endif %}
-            
-                    <span class="current">
-                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-                    </span>
-            
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}">next</a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-                    {% endif %}
-                </span>
-            </div>
-        </div>
-    </div> {% endcomment %}
-    
-    <div class="container justify-text-center">
-        <div class="row">
-            <h1 class="text-center mt-5 mb-4">Welcome!</h1>
-        </div>
-        <div class="row justify-content-center">
-            <div class="col-md-2">
-                <div class="card mb-3">
-                    <div class="card-body" style="min-height: 500px;">
-                      <h5 class="card-title">Popular lately:</h5>
-                      <p>Place Holder #1</p>
-                      <p>Place Holder #2</p>
-                      <p>Place Holder #3</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-5">
-                <div class="card mb-3">
-                    <div class="card-body" style="min-height: 250px;">
-                      <h5 class="card-title">About us:</h5>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                    </div>
-                </div>
-            </div>
-            {% if user.is_authenticated %}
-                <div class="col-md-2">
-                    <div class="card mb-3">
-                        <div class="card-body" style="min-height: 500px;">
-                        <h5 class="card-title">Recommended movies:</h5>
-                        <p>Place Holder #1</p>
-                        <p>Place Holder #2</p>
-                        <p>Place Holder #3</p>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
         </div>
     </div>
+    <div class="col-sm-6">
+        <div class="card">
+            <div class="card-body" style="min-height:600px;">
+                <h5 class="card-title">About us:</h5>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Commodo ullamcorper a lacus vestibulum sed arcu. Elit ut aliquam purus sit amet luctus. Pellentesque adipiscing commodo elit at. Semper risus in hendrerit gravida rutrum quisque. Integer enim neque volutpat ac. Dignissim sodales ut eu sem integer vitae. Scelerisque purus semper eget duis at. Lectus quam id leo in vitae turpis massa sed elementum. Congue nisi vitae suscipit tellus. Massa tempor nec feugiat nisl. Dapibus ultrices in iaculis nunc sed augue lacus viverra. At ultrices mi tempus imperdiet nulla malesuada pellentesque. Facilisi nullam vehicula ipsum a arcu cursus vitae congue. Sapien eget mi proin sed libero enim sed. Nulla aliquet enim tortor at auctor urna nunc. Mi sit amet mauris commodo quis. Ut sem nulla pharetra diam sit amet. Dui faucibus in ornare quam. Vulputate eu scelerisque felis imperdiet proin fermentum leo.</p>
+                <p>Orci sagittis eu volutpat odio facilisis mauris sit amet massa. Quam id leo in vitae. Id diam vel quam elementum pulvinar etiam non. Mollis aliquam ut porttitor leo a diam. Tellus integer feugiat scelerisque varius morbi. Sem integer vitae justo eget magna fermentum. Convallis tellus id interdum velit laoreet id donec. Egestas tellus rutrum tellus pellentesque eu tincidunt tortor aliquam nulla. Condimentum lacinia quis vel eros donec ac odio tempor orci. Vel pretium lectus quam id leo in vitae. Et ultrices neque ornare aenean euismod. Amet dictum sit amet justo donec enim diam vulputate.</p>
+                <p>Lectus sit amet est placerat in egestas erat imperdiet sed. Nibh tortor id aliquet lectus proin nibh nisl. Turpis massa tincidunt dui ut ornare. Arcu cursus vitae congue mauris rhoncus. Senectus et netus et malesuada.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="card">
+            <div class="card-body" style="min-height:600px;">
+                <h5 class="card-title">Recommended movies:</h5>
+                {% if user.is_authenticated %}
+                    <p>Blank for now</p>
+                {% else %}
+                    <p>Log in to see recommendations</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
 {%endblock%}

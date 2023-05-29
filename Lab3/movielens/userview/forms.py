@@ -44,3 +44,24 @@ class MovieForm(forms.ModelForm):
     class Meta:
         model = Movie
         fields = ['title', 'genres' ,'imdblink']
+
+# class ImageForm(forms.ModelForm):
+#     class Meta:
+#         model = Image
+#         fields = ['title', 'img', 'front_image', 'movie']
+
+class ImageForm(forms.ModelForm):
+    class Meta:
+        model = Image
+        fields = ['title', 'img', 'front_image']
+
+    # def __init__(self, movie, *args, **kwargs):
+    #     super(ImageForm, self).__init__(*args, **kwargs)
+    #     self.movie = movie
+
+    # def save(self, commit=True):
+    #     image = super(ImageForm, self).save(commit=False)
+    #     image.movie = self.movie
+    #     if commit:
+    #         image.save()
+    #     return image

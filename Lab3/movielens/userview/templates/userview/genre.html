@@ -12,8 +12,7 @@
             <tbody>
                 {%for movie in genre.movie_set.all%}
                 <tr class="">
-                    <td scope="row">{{movie.title}}</td>
-                    
+                    <td scope="row"><a href="/movie/{{ movie.id }}">{{movie.title}}</a></td>
                 </tr>
                 {%endfor%}
             </tbody>

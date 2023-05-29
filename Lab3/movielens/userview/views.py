@@ -23,11 +23,13 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views import generic
 from django.contrib.auth import login, logout, authenticate
-from django.db.models import Avg, IntegerField, Q
+from django.db.models import Avg, IntegerField, Q, F
 from django.db.models.functions import Coalesce
 from userview.forms import *
-from .models import Movie, Genre, Rating, Comment, Image
+from .models import *
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
+
 
 class IndexView(generic.ListView):
     template_name = 'userview/index.html'
@@ -40,6 +42,7 @@ class IndexView(generic.ListView):
 class MovieView(generic.DetailView):
     model = Movie
     template_name = 'userview/movie.html'
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         movie = self.get_object()
@@ -50,13 +53,16 @@ class MovieView(generic.DetailView):
         )['average_rating']
         context['avg_rating'] = avg_rating
         gallery = Image.objects.filter(movie=movie)
-        context['gallery'] = gallery.order_by('-front_image')
-        if self.request.user.is_authenticated and Rating.objects.filter(movie=movie, user=self.request.user).first() != None:
+        context['gallery'] = gallery.order_by('-front_image', 'id')
+        if self.request.user.is_authenticated and Rating.objects.filter(movie=movie, user=self.request.user).first() is not None:
             user_rating = Rating.objects.filter(movie=movie, user=self.request.user).first().value
         else:
             user_rating = 0
         context['user_rating'] = user_rating
         context['comment_form'] = CommentForm()
+        
+        # Create an instance of ImageForm and pass the movie object
+        # context['image_form'] = ImageForm(movie=movie)
         return context
     
 class GenreView(generic.DetailView):
@@ -74,7 +80,7 @@ class CommentView(generic.DetailView):
 from django.db.models import Avg
 
 def search(request):
-    search_results = None
+    search_results = Movie.objects.all()
 
     if request.method == 'POST':
         search_form = SearchForm(request.POST)
@@ -210,11 +216,73 @@ def new_movie(request):
         movie_form = MovieForm(request.POST)
         if movie_form.is_valid():
             movie = movie_form.save()
-            return redirect('movie', movie_id=movie.pk)
+            return redirect('/movie/' + str(movie.id))
     else:
         movie_form = MovieForm()
 
     context = {'movie_form': movie_form}
     return render(request, 'userview/new_movie.html', context)
 
+
+def add_image(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+    if request.method == 'POST':
+        image_form = ImageForm(request.POST, request.FILES)
+        if image_form.is_valid():
+            image = image_form.save(commit=False)
+            image.movie = movie
+
+            if image.front_image == True:
+            # Check if there is an existing front image for the movie
+                existing_front_image = Image.objects.filter(movie=movie, front_image=True).first()
+                if existing_front_image:
+                    # If an existing front image exists, set its front_image attribute to False
+                    existing_front_image.front_image = False
+                    existing_front_image.save()
+
+            image.save()
+            return redirect('/movie/' + str(movie.id))
+    else:
+        image_form = ImageForm()
+
+    context = {'image_form': image_form}
+    return render(request, 'userview/add_image.html', context)
+
+
+def edit_movie(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+    gallery = Image.objects.filter(movie=movie)
     
+    if request.method == 'POST':
+        if 'delete_movie' in request.POST:
+            # Delete the movie
+            Movie.objects.filter(id=movie.id).delete()
+            return redirect('/')
+        
+        movie_form = MovieForm(request.POST, instance=movie)
+        if movie_form.is_valid():
+            movie_form.save()
+            return redirect('/movie/' + str(movie.id))
+    else:
+        movie_form = MovieForm(instance=movie)
+
+    if request.method == 'POST' and 'delete_image' in request.POST:
+        image_id = request.POST['delete_image']
+        image = get_object_or_404(Image, id=image_id)
+        image.delete()
+        return HttpResponseRedirect(request.path_info)
+
+    if request.method == 'POST' and 'set_front_image' in request.POST:
+        image_id = request.POST['set_front_image']
+        image = get_object_or_404(Image, id=image_id)
+        
+        # Update all images for the movie to set front_image=False except for the selected image
+        movie.image_set.exclude(id=image.id).update(front_image=False)
+        
+        # Set the selected image as the front image
+        image.front_image = True
+        image.save()
+        return HttpResponseRedirect(request.path_info)
+
+    context = {'movie_form': movie_form, 'movie': movie, 'gallery': gallery.order_by('-front_image', 'id')}
+    return render(request, 'userview/edit_movie.html', context)
