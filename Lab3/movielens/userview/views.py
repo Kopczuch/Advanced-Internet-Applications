@@ -77,10 +77,9 @@ class CommentView(generic.DetailView):
     model = Comment
     template_name = 'userview/comment.html'
 
-from django.db.models import Avg
 
 def search(request):
-    search_results = Movie.objects.all()
+    search_results = Movie.objects.all().annotate(avg_rating=Avg('rating__value'))
 
     if request.method == 'POST':
         search_form = SearchForm(request.POST)
@@ -88,15 +87,22 @@ def search(request):
             genres = search_form.cleaned_data['genres'].split(' ')
             title = search_form.cleaned_data['title']
             min_rating = search_form.cleaned_data['min_rating']
+
             query = Q()
             if genres:
-                for genre in genres:
+                query &= Q(genres__name__icontains=genres[0].strip().lower())
+                for genre in genres[1:]:
                     query |= Q(genres__name__icontains=genre.strip().lower())
+
             if title:
                 query &= Q(title=title)
+
+            search_results = Movie.objects.filter(query).annotate(avg_rating=Avg('rating__value'))
+            
             if min_rating:
-                query &= Q(rating__gte=min_rating)
-            search_results = Movie.objects.filter(query).annotate(avg_rating=Avg('rating__value')).order_by('title')
+                search_results = search_results.filter(avg_rating__gte=min_rating)
+
+            search_results = search_results.order_by('title')
         else:
             search_form = SearchForm()
     else:
