@@ -1,0 +1,10 @@
+[
+    {
+        "model": "userview.genre",
+        "pk": 3,
+        "fields": {
+            "name": "Animation"
+        }
+    }
+]
+

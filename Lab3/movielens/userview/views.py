@@ -187,10 +187,6 @@ def new_rating(request, movie_id=None):
     return render(request, 'userview/new_rating.html', context)
 
 
-    context = {'add_form': add_form}
-    return render(request, 'userview/new_rating.html', context)
-
-
 def movie_gallery(request, movie_id):
     movie = Movie.objects.get(pk=movie_id)
     gallery = Image.objects.filter(movie=movie)
@@ -292,3 +288,17 @@ def edit_movie(request, movie_id):
 
     context = {'movie_form': movie_form, 'movie': movie, 'gallery': gallery.order_by('-front_image', 'id')}
     return render(request, 'userview/edit_movie.html', context)
+
+
+def iframe(request):
+    return render(request, 'userview/iframe.html')
+
+
+def video(request):
+    return render(request, 'userview/video.html')
+
+
+def video_embed(request):
+    videos = EmbeddedVideoItem.objects.all()
+    return render(request, 'userview/video_embed.html', context={'videos'
+    : videos})

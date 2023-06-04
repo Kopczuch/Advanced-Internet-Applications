@@ -19,4 +19,7 @@ urlpatterns = [
     path("new_movie", views.new_movie, name="new_movie"),
     path('movie/<int:movie_id>/add_image', views.add_image, name='add_image'),
     path('movie/<int:movie_id>/edit_movie', views.edit_movie, name='edit_movie'),
+    path('iframe', views.iframe, name='iframe'),
+    path('video', views.video, name='video'),
+    path('video_embed', views.video_embed, name='video_embed'),
 ]
