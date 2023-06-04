@@ -10,15 +10,17 @@ class Genre(models.Model):
 
 class Movie(models.Model):
     title = models.CharField(max_length=1000)
+    year = models.IntegerField()
     genres = models.ManyToManyField(Genre)
-    imdbLink = models.URLField(max_length=500)
+    director = models.CharField(max_length=1000)
+    imdblink = models.URLField(max_length=500)
     description = models.TextField()
 
     def __str__(self):
         return self.title
 
 class Rating(models.Model):
-    rating = models.FloatField()
+    value = models.FloatField()
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
@@ -26,9 +28,10 @@ class Rating(models.Model):
         return f"Rating {self.rating} for {self.movie}"
 
 class Comment(models.Model):
-    comment = models.TextField()
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    comment = models.TextField()
+    timestamp = models.IntegerField()
 
     def __str__(self):
         return f"Comment by {self.user.username} on {self.movie}"

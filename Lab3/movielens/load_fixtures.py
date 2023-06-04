@@ -1,98 +1,78 @@
-import os
-import json
-import django
 from django.core.management import call_command
 from django.conf import settings
-
-# Configure Django settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'movielens.settings')
-django.setup()
-
-# Import necessary models
-from userview.models import Genre, Movie, Image
+import os
+import json
+from userview.models import Movie, Genre, Comment, Rating, Image
 from django.contrib.auth.models import User
 
-def create_fixture_files():
-    # Get the directory path of the script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Specify the fixture file names
-    fixture_files = [
-        'genres.json',
-        'movies.json',
-        'images.json',
-        'comments.json',
-        'ratings.json',
-    ]
-
-    # Create empty fixture files if they don't exist
-    for file in fixture_files:
-        file_path = os.path.join(script_dir, 'fixtures', file)
-        if not os.path.exists(file_path):
-            open(file_path, 'w').close()
 
 def load_fixtures():
-    # Load genres fixture
-    genres_fixture = os.path.join('fixtures', 'genres.json')
-    call_command('loaddata', genres_fixture)
+    fixture_dir = os.path.join(settings.BASE_DIR, 'movielens', 'fixtures')
+    fixtures = [
+        'genres.json',
+        'movies.json',
+        'users.json',
+        'comments.json',
+        'ratings.json'
+    ]
 
-    # Load movies and images
-    movies_dir = os.path.join('fixtures', 'picked_movies')
-    movies_data = []
-    images_data = []
+    for fixture in fixtures:
+        fixture_file = os.path.join(fixture_dir, fixture)
+        with open(fixture_file, 'r') as file:
+            fixture_data = json.load(file)
 
-    for filename in os.listdir(movies_dir):
-        if filename.endswith('.json'):
-            movie_file = os.path.join(movies_dir, filename)
-            with open(movie_file, 'r') as file:
-                movie_data = json.load(file)
-                movies_data.append(movie_data)
+        model_name = fixture_data[0]['model']
 
-                image_filename = movie_data['image']
-                image_data = {
-                    'model': 'userview.image',
-                    'fields': {
-                        'title': movie_data['title'],
-                        'img': os.path.join('picked_movies', image_filename),
-                        'front_image': True,
-                        'movie': None,
-                    }
-                }
-                images_data.append(image_data)
+        if model_name == 'movielens.movie':
+            for item in fixture_data:
+                fields = item['fields']
+                genres = fields.pop('genres', None)
+                if genres:
+                    genre_objects = []
+                    for genre_name in genres.split(', '):
+                        genre, _ = Genre.objects.get_or_create(name=genre_name)
+                        genre_objects.append(genre)
+                    fields['genres'] = genre_objects
+                fields['imdblink'] = fields.pop('imdbLink')
+                movie = Movie.objects.create(**fields)
+                image_file = fields.pop('image', None)
+                if image_file:
+                    Image.objects.create(title=fields['title'], img=f'picked_movies/{image_file}', front_image=True,
+                                         movie=movie)
 
-    # Load user data
-    users_dir = os.path.join('fixtures', 'picked_users')
-    users_data = []
+        elif model_name == 'movielens.rating':
+            for item in fixture_data:
+                fields = item['fields']
+                fields['user'] = User.objects.get(id=fields.pop('user_id'))
+                fields['movie'] = Movie.objects.get(id=fields.pop('movie_id'))
+                fields['value'] = fields.pop('rating')
+                Rating.objects.create(**fields)
 
-    for filename in os.listdir(users_dir):
-        if filename.endswith('.json'):
-            user_file = os.path.join(users_dir, filename)
-            with open(user_file, 'r') as file:
-                user_data = json.load(file)
-                users_data.append(user_data)
+        elif model_name == 'movielens.comment':
+            for item in fixture_data:
+                fields = item['fields']
+                fields['user'] = User.objects.get(id=fields.pop('user'))
+                fields['movie'] = Movie.objects.get(id=fields.pop('movie'))
+                fields['timestamp'] = fields.pop('timestamp')
+                Comment.objects.create(**fields)
 
-    # Load comments
-    comments_file = os.path.join('fixtures', 'picked_comments.json')
-    with open(comments_file, 'r') as file:
-        comments_data = json.load(file)
+        elif model_name == 'movielens.image':
+            for item in fixture_data:
+                fields = item['fields']
+                fields.pop('movie', None)
+                image_file = fields.pop('img')
+                movie_title = fields.pop('title')
+                movie = Movie.objects.get(title=movie_title)
+                Image.objects.create(title=movie_title, img=image_file, front_image=True, movie=movie)
 
-    # Load ratings
-    ratings_file = os.path.join('fixtures', 'picked_ratings.json')
-    with open(ratings_file, 'r') as file:
-        ratings_data = json.load(file)
+        elif model_name == 'auth.user':
+            for item in fixture_data:
+                fields = item['fields']
+                User.objects.create_user(**fields)
 
-    # Create the fixture data
-    fixture_data = movies_data + images_data + users_data + comments_data + ratings_data
+        else:
+            call_command('loaddata', fixture_file)
 
-    # Write the fixture data to a file
-    fixture_file = os.path.join('fixtures', 'all_data.json')
-    with open(fixture_file, 'w') as file:
-        json.dump(fixture_data, file)
 
-    # Load the combined fixture into the database
-    call_command('loaddata', fixture_file)
-
-# Execute the script
-if __name__ == "__main__":
-    create_fixture_files()
+if __name__ == '__main__':
     load_fixtures()
