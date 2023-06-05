@@ -23,21 +23,35 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views import generic
 from django.contrib.auth import login, logout, authenticate
-from django.db.models import Avg, IntegerField, Q, F
+from django.db.models import Avg, IntegerField, Q, F, FloatField
 from django.db.models.functions import Coalesce
 from userview.forms import *
 from .models import *
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
-
+from datetime import datetime
+from django.core.paginator import Paginator
+import random
 
 class IndexView(generic.ListView):
     template_name = 'userview/index.html'
     context_object_name = 'movies'
-    paginate_by = 2
     model = Movie
     def get_queryset(self):
         return Movie.objects.order_by('-title')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Popular lately
+        context['most_liked_movies'] = Movie.get_most_liked_movies()
+        
+        # Similar movies to a random movie rated >= 4 by user
+        user = self.request.user if self.request.user.is_authenticated else None
+        rated_movies = Rating.objects.filter(user=user, value__gte=4).values_list('movie', flat=True)
+        if len(rated_movies) != 0:
+            random_good_movie_id = rated_movies[random.randint(0, len(rated_movies)-1)]
+            random_good_movie = Movie.objects.get(id=random_good_movie_id)
+            context['similar_movies'] = random_good_movie.similar_movies()
+        return context
     
 class MovieView(generic.DetailView):
     model = Movie
@@ -49,9 +63,10 @@ class MovieView(generic.DetailView):
         comments = Comment.objects.filter(movie=movie)
         context['comments'] = comments
         avg_rating = Rating.objects.filter(movie=movie).aggregate(
-            average_rating=Coalesce(Avg('value', output_field=IntegerField()), 0)
+            average_rating=Coalesce(Avg('value', output_field=FloatField()), 0.0)
         )['average_rating']
-        context['avg_rating'] = avg_rating
+        rounded_rating = round(avg_rating, 1)
+        context['avg_rating'] = rounded_rating
         gallery = Image.objects.filter(movie=movie)
         context['gallery'] = gallery.order_by('-front_image', 'id')
         if self.request.user.is_authenticated and Rating.objects.filter(movie=movie, user=self.request.user).first() is not None:
@@ -76,40 +91,6 @@ class RatingView(generic.DeleteView):
 class CommentView(generic.DetailView):
     model = Comment
     template_name = 'userview/comment.html'
-
-
-def search(request):
-    search_results = Movie.objects.all().annotate(avg_rating=Avg('rating__value'))
-
-    if request.method == 'POST':
-        search_form = SearchForm(request.POST)
-        if search_form.is_valid():
-            genres = search_form.cleaned_data['genres'].split(' ')
-            title = search_form.cleaned_data['title']
-            min_rating = search_form.cleaned_data['min_rating']
-
-            query = Q()
-            if genres:
-                query &= Q(genres__name__icontains=genres[0].strip().lower())
-                for genre in genres[1:]:
-                    query |= Q(genres__name__icontains=genre.strip().lower())
-
-            if title:
-                query &= Q(title=title)
-
-            search_results = Movie.objects.filter(query).annotate(avg_rating=Avg('rating__value'))
-            
-            if min_rating:
-                search_results = search_results.filter(avg_rating__gte=min_rating)
-
-            search_results = search_results.order_by('title')
-        else:
-            search_form = SearchForm()
-    else:
-        search_form = SearchForm()
-
-    context = {'search_form': search_form, 'search_results': search_results}
-    return render(request, 'userview/search.html', context)
 
 
 def register_request(request):
@@ -205,6 +186,8 @@ def add_comment(request, movie_id):
             comment = comment_form.save(commit=False)
             comment.user = request.user
             comment.movie = movie
+            now = datetime.now()
+            comment.timestamp = now.timestamp()
             comment.save()
             return redirect('/movie/' + str(movie.id))
     else:
@@ -290,15 +273,61 @@ def edit_movie(request, movie_id):
     return render(request, 'userview/edit_movie.html', context)
 
 
-def iframe(request):
-    return render(request, 'userview/iframe.html')
+def search(request):
+    
+    search_results = Movie.objects.all().annotate(avg_rating=Avg('rating__value')).order_by('title')
+
+    if request.method == 'POST':
+        search_form = SearchForm(request.POST)
+        if search_form.is_valid():
+            genres = search_form.cleaned_data['genres'].split(' ')
+            title = search_form.cleaned_data['title']
+            min_rating = search_form.cleaned_data['min_rating']
+
+            query = Q()
+            if genres:
+                query &= Q(genres__name__icontains=genres[0].strip().lower())
+                for genre in genres[1:]:
+                    query |= Q(genres__name__icontains=genre.strip().lower())
+
+            if title:
+                query &= Q(title__icontains=title)
+
+            search_results = Movie.objects.filter(query).annotate(avg_rating=Avg('rating__value'))
+            
+            if min_rating:
+                search_results = search_results.filter(avg_rating__gte=min_rating)
+
+            search_results = search_results.order_by('title')
+        else:
+            search_form = SearchForm()
+    else:
+        search_form = SearchForm()
+
+    paginator = Paginator(search_results, 6)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    context = {'search_form': search_form, 'search_results': search_results, 'page_obj': page_obj}
+    return render(request, 'userview/search.html', context)
 
 
-def video(request):
-    return render(request, 'userview/video.html')
+# def iframe(request):
+#     return render(request, 'userview/iframe.html')
 
 
-def video_embed(request):
-    videos = EmbeddedVideoItem.objects.all()
-    return render(request, 'userview/video_embed.html', context={'videos'
-    : videos})
+# def video(request):
+#     return render(request, 'userview/video.html')
+
+
+# def video_embed(request):
+#     videos = EmbeddedVideoItem.objects.all()
+#     return render(request, 'userview/video_embed.html', context={'videos'
+#     : videos})
+
+from django import template
+
+register = template.Library()
+
+@register.filter
+def round_decimal(value, decimal_places=2):
+    return round(value, decimal_places)

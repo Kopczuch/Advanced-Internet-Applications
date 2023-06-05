@@ -61,9 +61,13 @@
     }
 
     .carousel-item img {
-      height: 800px;
+      {% comment %} height: 800px;
       object-fit: cover;
-      object-position: center top;
+      object-position: center top; {% endcomment %}
+      max-height: 400px;
+      width: auto;
+      object-fit: contain;
+      object-position: center;
     }
     
     

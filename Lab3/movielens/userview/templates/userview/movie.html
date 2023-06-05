@@ -5,10 +5,12 @@
   <div class="row">
     <div class="col-md-6">
       <h1>
-        {{ movie.title }}
+        {{ movie.title }} ({{ movie.year}})
         <a class="btn btn-warning" href="{{ movie.imdblink }}" target="_blank"
         style="font-family: 'Kenyan Coffee', sans-serif; font-size: 25px; width: fit-content; padding: 0px 10px;">IMDb</a>
       </h1>
+      <p class="mb-2">{{ movie.description }}</p>
+      <p class="mb-2"><strong>Director:</strong> {{ movie.director }}
       <p class="mb-2">
         <strong>Genres:</strong>
         {% for genre in movie.genres.all %}
@@ -111,20 +113,20 @@
             <div class="card-body" style="min-height: 100px;">
               <div class="d-flex justify-content-between align-items-center">
                 <h5 class="card-title">{{ comment.user }}</h5>
-                {% if comment.content|length > 100 %}
+                {% if comment.comment|length > 100 %}
                 <a class="btn btn-success read-more" data-bs-toggle="collapse" href="#commentCollapse{{ comment.id }}" role="button" aria-expanded="false" aria-controls="commentCollapse{{ comment.id }}">
                   <i class="fa fa-angle-down" aria-hidden="true"></i>
                 </a>
                 {% endif %}
               </div>
               <div class="collapse" id="commentCollapse{{ comment.id }}">
-                <p class="card-text">{{ comment.content }}</p>
+                <p class="card-text">{{ comment.comment }}</p>
               </div>
-              {% if comment.content|length > 100 %}
-              <p class="card-text">{{ comment.content|truncatechars:40 }}</p>
+              {% if comment.comment|length > 100 %}
+              <p class="card-text">{{ comment.comment|truncatechars:40 }}</p>
               </a>
               {% else %}
-              <p class="card-text">{{ comment.content }}</p>
+              <p class="card-text">{{ comment.comment }}</p>
               {% endif %}
             </div>
           </div>

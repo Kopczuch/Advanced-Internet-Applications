@@ -23,13 +23,13 @@ class RatingForm(forms.ModelForm):
         fields = ['movie', 'value']
 
 class CommentForm(forms.ModelForm):
-    content = forms.CharField(
+    comment = forms.CharField(
         widget=forms.Textarea(attrs={'placeholder': 'Enter your comment here', 'rows': 4}),
         label=''
     )
     class Meta:
         model = Comment
-        fields = ('content',)
+        fields = ('comment',)
 
 class SearchForm(forms.Form):
     genres = forms.CharField(required=False)
@@ -43,7 +43,7 @@ class MovieForm(forms.ModelForm):
     )
     class Meta:
         model = Movie
-        fields = ['title', 'genres' ,'imdblink']
+        fields = ['title', 'year', 'genres', 'director', 'imdblink', 'description']
 
 # class ImageForm(forms.ModelForm):
 #     class Meta:

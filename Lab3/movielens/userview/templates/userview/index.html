@@ -10,14 +10,9 @@
             <div class="card-body" style="min-height:650px;">
                 <h5 class="card-title">Popular Lately:</h5>
                 <ul>
-                    <li>Cocaine Bear</li>
-                    <li>John Wick 4</li>
-                    <li>Guardians of the Galaxy vol. 3</li>
-                    <li>The Super Mario Bros. Movie</li>
-                    <li>Fast X</li>
-                    <li>Sisu</li>
-                    <li>Dungeons & Dragons: Honor Among Thieves</li>
-                    <li>Air</li>
+                    {% for movie in most_liked_movies|slice:":20" %}
+                        <li><a href="/movie/{{ movie.id }}" style="color: white;">{{ movie.title }}</a></li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>
@@ -37,7 +32,11 @@
             <div class="card-body" style="min-height:650px;">
                 <h5 class="card-title">Recommended movies:</h5>
                 {% if user.is_authenticated %}
-                    <p>Blank for now</p>
+                    <ul>
+                        {% for movie in similar_movies|slice:":20" %}
+                            <li><a href="/movie/{{ movie.id }}" style="color: white;">{{ movie.title }}</a></li>
+                        {% endfor %}
+                    </ul>
                 {% else %}
                     <p>Log in to see recommendations</p>
                 {% endif %}

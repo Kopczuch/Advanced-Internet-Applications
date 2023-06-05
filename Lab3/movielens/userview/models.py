@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
-from embed_video.fields import EmbedVideoField
+from django.db.models import Q, Max, Avg
+# from embed_video.fields import EmbedVideoField
 
 class Genre(models.Model):
     name = models.CharField(max_length=100)
@@ -18,6 +19,20 @@ class Movie(models.Model):
 
     def __str__(self):
         return self.title
+    
+    def get_most_liked_movies():
+        latest_rating_ids = Rating.objects.values('movie').annotate(max_id=Max('id')).order_by('-max_id')
+        movie_ids = [rating['movie'] for rating in latest_rating_ids]
+        most_liked_movies = Movie.objects.filter(id__in=movie_ids).annotate(avg_rating=Avg('rating__value')).filter(avg_rating__gte=4).order_by('-avg_rating')
+        return most_liked_movies
+    
+    def similar_movies(self):
+        similar_movies = Movie.objects.filter(Q(director=self.director) | Q(genres__in=self.genres.all())).exclude(id=self.id).distinct()
+        return list(similar_movies)
+
+
+
+
 
 class Rating(models.Model):
     value = models.FloatField()
@@ -44,9 +59,9 @@ class Image(models.Model):
 
     def __str__(self):
         return self.title
-class EmbeddedVideoItem(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.CharField(max_length=1000)
-    video = EmbedVideoField()
-    class Meta:
-        ordering = ['title']
+# class EmbeddedVideoItem(models.Model):
+#     title = models.CharField(max_length=200)
+#     description = models.CharField(max_length=1000)
+#     video = EmbedVideoField()
+#     class Meta:
+#         ordering = ['title']
