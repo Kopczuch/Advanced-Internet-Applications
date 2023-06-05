@@ -1,17 +1,15 @@
-{% comment %} {% extends 'userview/header.html' %}
+{% extends 'userview/header.html' %}
+{% load embed_video_tags %}
 {% block content %}
-  <head>
-    <title>Embedding a local video in a static page</title>
-    <!-- Required meta tags -->
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1,
-    shrink-to-fit=no" />
-  </head>
-  <body>
-    <main>
-      <video controls autoplay muted>
-        <source src="file_example_MP4_480_1_5MG.mp4" type="video/mp4" />Your browser does not support the video tag.
-      </video>
-    </main>
-  </body>
-{% endblock %} {% endcomment %}
+    <div class="container text-center justify-content-center">
+      <h1>{{ video.title }}</h1>
+      <p>{{ video.description }}</p>
+      {% video video.video as this_video %}
+      {% video this_video "medium" %}
+      {% endvideo %}
+      <br>
+      <a href="/video_embed" class="btn btn-success">Back to the list</a>
+    </div>
+    
+
+{% endblock %}

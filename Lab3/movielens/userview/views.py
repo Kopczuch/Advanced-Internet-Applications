@@ -311,18 +311,23 @@ def search(request):
     return render(request, 'userview/search.html', context)
 
 
-# def iframe(request):
-#     return render(request, 'userview/iframe.html')
+def iframe(request):
+    return render(request, 'userview/iframe.html')
 
 
-# def video(request):
-#     return render(request, 'userview/video.html')
+def video(request, video_title):
+    video = EmbeddedVideoItem.objects.get(title=video_title)
+    context = {'video': video}
+    return render(request, 'userview/video.html', context)
 
 
-# def video_embed(request):
-#     videos = EmbeddedVideoItem.objects.all()
-#     return render(request, 'userview/video_embed.html', context={'videos'
-#     : videos})
+def video_embed(request):
+    videos = EmbeddedVideoItem.objects.all()
+    paginator = Paginator(videos, 6)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'userview/video_embed.html', context={'videos'
+    : videos, 'page_obj': page_obj})
 
 from django import template
 

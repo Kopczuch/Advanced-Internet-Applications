@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Q, Max, Avg
-# from embed_video.fields import EmbedVideoField
+from embed_video.fields import EmbedVideoField
 
 class Genre(models.Model):
     name = models.CharField(max_length=100)
@@ -59,9 +59,10 @@ class Image(models.Model):
 
     def __str__(self):
         return self.title
-# class EmbeddedVideoItem(models.Model):
-#     title = models.CharField(max_length=200)
-#     description = models.CharField(max_length=1000)
-#     video = EmbedVideoField()
-#     class Meta:
-#         ordering = ['title']
+    
+class EmbeddedVideoItem(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.CharField(max_length=1000)
+    video = EmbedVideoField()
+    class Meta:
+        ordering = ['title']

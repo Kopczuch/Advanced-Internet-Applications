@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'userview.apps.UserviewConfig',
     'crispy_forms',
     'crispy_bootstrap5',
-    # 'embed_video',
+    'embed_video',
 ]
 
 MIDDLEWARE = [
